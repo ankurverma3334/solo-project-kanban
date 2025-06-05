@@ -1,14 +1,20 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
-const UserDropdown = ({ user, onLogout }) => {
+interface UserDropdownProps {
+  user: SupabaseUser;
+  onLogout: () => Promise<void>;
+}
+
+const UserDropdown = ({ user, onLogout }: UserDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -16,6 +22,8 @@ const UserDropdown = ({ user, onLogout }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const displayName = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -28,7 +36,7 @@ const UserDropdown = ({ user, onLogout }) => {
         </div>
         <div className="text-left">
           <div className="text-sm font-medium text-gray-900 capitalize">
-            {user.name}
+            {displayName}
           </div>
           <div className="text-xs text-gray-500">{user.email}</div>
         </div>

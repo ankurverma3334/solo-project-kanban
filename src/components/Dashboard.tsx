@@ -3,10 +3,26 @@ import React, { useState, useEffect } from 'react';
 import ProjectSidebar from './ProjectSidebar';
 import KanbanBoard from './KanbanBoard';
 import UserDropdown from './UserDropdown';
+import { User } from '@supabase/supabase-js';
 
-const Dashboard = ({ user, onLogout }) => {
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
+interface DashboardProps {
+  user: User;
+  onLogout: () => Promise<void>;
+}
+
+interface Project {
+  id: number;
+  name: string;
+  columns: Array<{
+    id: string;
+    title: string;
+    cards: Array<any>;
+  }>;
+}
+
+const Dashboard = ({ user, onLogout }: DashboardProps) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
     // Load projects from localStorage
@@ -25,8 +41,8 @@ const Dashboard = ({ user, onLogout }) => {
     localStorage.setItem('kanban_projects', JSON.stringify(projects));
   }, [projects]);
 
-  const addProject = (projectName) => {
-    const newProject = {
+  const addProject = (projectName: string) => {
+    const newProject: Project = {
       id: Date.now(),
       name: projectName,
       columns: [
@@ -40,7 +56,7 @@ const Dashboard = ({ user, onLogout }) => {
     setSelectedProject(newProject);
   };
 
-  const deleteProject = (projectId) => {
+  const deleteProject = (projectId: number) => {
     const updatedProjects = projects.filter(p => p.id !== projectId);
     setProjects(updatedProjects);
     if (selectedProject?.id === projectId) {
@@ -48,7 +64,7 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  const updateProject = (updatedProject) => {
+  const updateProject = (updatedProject: Project) => {
     const updatedProjects = projects.map(p => 
       p.id === updatedProject.id ? updatedProject : p
     );
