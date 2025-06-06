@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import ProjectSidebar from './ProjectSidebar';
@@ -45,7 +44,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
 
   const addProject = async (projectName: string) => {
     try {
-      const newProject = await projectService.createProject(projectName);
+      const newProject = await projectService.createProject(projectName, user);
       setProjects([newProject, ...projects]);
       setSelectedProject(newProject);
       toast({
@@ -88,7 +87,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
 
   const updateProject = async (updatedProject: Project) => {
     try {
-      await projectService.updateProject(updatedProject);
+      await projectService.updateProject(updatedProject, user);
       const updatedProjects = projects.map(p => 
         p.id === updatedProject.id ? updatedProject : p
       );

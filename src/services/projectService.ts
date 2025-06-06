@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
-import { useAuth } from "@/hooks/useAuth";
+import { User } from '@supabase/supabase-js';
 
 // Type for Supabase's Project table row
 type SupabaseProject = {
@@ -73,10 +73,7 @@ export const projectService = {
     return data ? mapToProject(data as SupabaseProject) : null;
   },
 
-  async createProject(name: string): Promise<Project> {
-    // Get the current user's ID
-    const { user } = useAuth();
-    
+  async createProject(name: string, user: User): Promise<Project> {
     if (!user) {
       throw new Error("User must be logged in to create a project");
     }
@@ -110,10 +107,7 @@ export const projectService = {
     return mapToProject(data as SupabaseProject);
   },
 
-  async updateProject(project: Project): Promise<Project> {
-    // Get the current user's ID
-    const { user } = useAuth();
-    
+  async updateProject(project: Project, user: User): Promise<Project> {
     if (!user) {
       throw new Error("User must be logged in to update a project");
     }
