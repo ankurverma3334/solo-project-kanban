@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import ProjectSidebar from './ProjectSidebar';
@@ -85,6 +86,37 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
     }
   };
 
+  const renameProject = async (projectId: string, newName: string) => {
+    try {
+      const projectToRename = projects.find(p => p.id === projectId);
+      if (!projectToRename) return;
+
+      const updatedProject = { ...projectToRename, name: newName };
+      await projectService.updateProject(updatedProject, user);
+      
+      const updatedProjects = projects.map(p => 
+        p.id === projectId ? updatedProject : p
+      );
+      setProjects(updatedProjects);
+      
+      if (selectedProject?.id === projectId) {
+        setSelectedProject(updatedProject);
+      }
+      
+      toast({
+        title: "Project renamed",
+        description: "The project has been renamed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error renaming project",
+        description: "There was a problem renaming the project",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  };
+
   const updateProject = async (updatedProject: Project) => {
     try {
       await projectService.updateProject(updatedProject, user);
@@ -113,6 +145,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
           onSelectProject={setSelectedProject}
           onAddProject={addProject}
           onDeleteProject={deleteProject}
+          onRenameProject={renameProject}
           isLoading={isLoading}
         />
       </div>

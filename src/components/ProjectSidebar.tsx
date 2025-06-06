@@ -1,7 +1,12 @@
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Folder, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Folder, Loader2, Edit } from 'lucide-react';
 import { Project } from '@/services/projectService';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface ProjectSidebarProps {
   projects: Project[];
@@ -9,6 +14,7 @@ interface ProjectSidebarProps {
   onSelectProject: (project: Project) => void;
   onAddProject: (projectName: string) => Promise<void>;
   onDeleteProject: (projectId: string) => Promise<void>;
+  onRenameProject: (projectId: string, newName: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -18,12 +24,16 @@ const ProjectSidebar = ({
   onSelectProject, 
   onAddProject, 
   onDeleteProject,
+  onRenameProject,
   isLoading
 }: ProjectSidebarProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingProjectName, setEditingProjectName] = useState('');
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +52,35 @@ const ProjectSidebar = ({
   const handleDeleteProject = async (projectId: string) => {
     try {
       setDeletingId(projectId);
+      setOpenPopoverId(null);
       await onDeleteProject(projectId);
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleRenameProject = (project: Project) => {
+    setEditingProjectId(project.id);
+    setEditingProjectName(project.name);
+    setOpenPopoverId(null);
+  };
+
+  const handleRenameSubmit = async (e: React.FormEvent, project: Project) => {
+    e.preventDefault();
+    if (editingProjectName.trim() && editingProjectName !== project.name) {
+      try {
+        await onRenameProject(project.id, editingProjectName.trim());
+      } catch (error) {
+        console.error('Error renaming project:', error);
+      }
+    }
+    setEditingProjectId(null);
+    setEditingProjectName('');
+  };
+
+  const handleRenameCancel = () => {
+    setEditingProjectId(null);
+    setEditingProjectName('');
   };
 
   return (
@@ -132,32 +167,75 @@ const ProjectSidebar = ({
                   <Folder className={`w-4 h-4 flex-shrink-0 ${
                     selectedProject?.id === project.id ? 'text-blue-600' : 'text-gray-400'
                   }`} />
-                  <span className={`truncate text-sm ${
-                    selectedProject?.id === project.id ? 'text-blue-900 font-medium' : 'text-gray-700'
-                  }`}>
-                    {project.name}
-                  </span>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteProject(project.id);
-                  }}
-                  className={`p-1 transition-all ${
-                    deletingId === project.id 
-                      ? 'opacity-100' 
-                      : 'opacity-0 group-hover:opacity-100'
-                  } ${
-                    deletingId === project.id ? 'text-gray-400' : 'text-red-500 hover:text-red-700'
-                  }`}
-                  disabled={deletingId === project.id}
-                >
-                  {deletingId === project.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                  {editingProjectId === project.id ? (
+                    <form onSubmit={(e) => handleRenameSubmit(e, project)} className="flex-1">
+                      <input
+                        type="text"
+                        value={editingProjectName}
+                        onChange={(e) => setEditingProjectName(e.target.value)}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        autoFocus
+                        onBlur={handleRenameCancel}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            handleRenameCancel();
+                          }
+                        }}
+                      />
+                    </form>
                   ) : (
-                    <Trash2 className="w-4 h-4" />
+                    <span className={`truncate text-sm ${
+                      selectedProject?.id === project.id ? 'text-blue-900 font-medium' : 'text-gray-700'
+                    }`}>
+                      {project.name}
+                    </span>
                   )}
-                </button>
+                </div>
+                {editingProjectId !== project.id && (
+                  <Popover open={openPopoverId === project.id} onOpenChange={(open) => {
+                    setOpenPopoverId(open ? project.id : null);
+                  }}>
+                    <PopoverTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className={`p-1 transition-all ${
+                          deletingId === project.id 
+                            ? 'opacity-100' 
+                            : 'opacity-0 group-hover:opacity-100'
+                        } ${
+                          deletingId === project.id ? 'text-gray-400' : 'text-gray-500 hover:text-blue-600'
+                        }`}
+                        disabled={deletingId === project.id}
+                      >
+                        {deletingId === project.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Edit className="w-4 h-4" />
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-40 p-1" align="end">
+                      <div className="flex flex-col">
+                        <button
+                          onClick={() => handleRenameProject(project)}
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>Rename</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProject(project.id)}
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
             ))}
           </div>
