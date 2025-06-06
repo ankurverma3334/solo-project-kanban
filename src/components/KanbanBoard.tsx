@@ -2,14 +2,20 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Check, X } from 'lucide-react';
 import ProjectCard from './ProjectCard';
+import { Project } from '@/services/projectService';
 
-const KanbanBoard = ({ project, onUpdateProject }) => {
-  const [editingColumn, setEditingColumn] = useState(null);
+interface KanbanBoardProps {
+  project: Project;
+  onUpdateProject: (project: Project) => Promise<void>;
+}
+
+const KanbanBoard = ({ project, onUpdateProject }: KanbanBoardProps) => {
+  const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-  const [addingCard, setAddingCard] = useState(null);
+  const [addingCard, setAddingCard] = useState<string | null>(null);
   const [newCardTitle, setNewCardTitle] = useState('');
 
-  const handleColumnTitleEdit = (columnId, newTitle) => {
+  const handleColumnTitleEdit = (columnId: string, newTitle: string) => {
     if (newTitle.trim()) {
       const updatedProject = {
         ...project,
@@ -23,7 +29,7 @@ const KanbanBoard = ({ project, onUpdateProject }) => {
     setEditingTitle('');
   };
 
-  const handleAddCard = (columnId) => {
+  const handleAddCard = (columnId: string) => {
     if (newCardTitle.trim()) {
       const newCard = {
         id: Date.now(),
@@ -46,7 +52,7 @@ const KanbanBoard = ({ project, onUpdateProject }) => {
     setNewCardTitle('');
   };
 
-  const handleDeleteCard = (columnId, cardId) => {
+  const handleDeleteCard = (columnId: string, cardId: number) => {
     const updatedProject = {
       ...project,
       columns: project.columns.map(col =>
@@ -58,7 +64,7 @@ const KanbanBoard = ({ project, onUpdateProject }) => {
     onUpdateProject(updatedProject);
   };
 
-  const handleUpdateCard = (columnId, updatedCard) => {
+  const handleUpdateCard = (columnId: string, updatedCard: any) => {
     const updatedProject = {
       ...project,
       columns: project.columns.map(col =>
@@ -70,15 +76,15 @@ const KanbanBoard = ({ project, onUpdateProject }) => {
     onUpdateProject(updatedProject);
   };
 
-  const handleDragStart = (e, card, sourceColumnId) => {
+  const handleDragStart = (e: React.DragEvent, card: any, sourceColumnId: string) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ card, sourceColumnId }));
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e, targetColumnId) => {
+  const handleDrop = (e: React.DragEvent, targetColumnId: string) => {
     e.preventDefault();
     const data = JSON.parse(e.dataTransfer.getData('application/json'));
     const { card, sourceColumnId } = data;
@@ -88,7 +94,7 @@ const KanbanBoard = ({ project, onUpdateProject }) => {
         ...project,
         columns: project.columns.map(col => {
           if (col.id === sourceColumnId) {
-            return { ...col, cards: col.cards.filter(c => c.id !== card.id) };
+            return { ...col, cards: col.cards.filter((c: any) => c.id !== card.id) };
           }
           if (col.id === targetColumnId) {
             return { ...col, cards: [...col.cards, card] };

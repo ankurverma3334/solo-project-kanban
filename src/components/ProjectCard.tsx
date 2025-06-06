@@ -2,7 +2,21 @@
 import React, { useState } from 'react';
 import { Trash2, Edit2, Check, X } from 'lucide-react';
 
-const ProjectCard = ({ card, onDelete, onUpdate, onDragStart }) => {
+interface Card {
+  id: number;
+  title: string;
+  description: string;
+  createdAt: string;
+}
+
+interface ProjectCardProps {
+  card: Card;
+  onDelete: () => void;
+  onUpdate: (updatedCard: Card) => void;
+  onDragStart: (e: React.DragEvent) => void;
+}
+
+const ProjectCard = ({ card, onDelete, onUpdate, onDragStart }: ProjectCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(card.title);
   const [editDescription, setEditDescription] = useState(card.description || '');

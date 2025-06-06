@@ -1,75 +1,107 @@
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from "@/hooks/use-toast";
 import ProjectSidebar from './ProjectSidebar';
 import KanbanBoard from './KanbanBoard';
 import UserDropdown from './UserDropdown';
 import { User } from '@supabase/supabase-js';
+import { projectService, Project } from '@/services/projectService';
 
 interface DashboardProps {
   user: User;
   onLogout: () => Promise<void>;
 }
 
-interface Project {
-  id: number;
-  name: string;
-  columns: Array<{
-    id: string;
-    title: string;
-    cards: Array<any>;
-  }>;
-}
-
 const Dashboard = ({ user, onLogout }: DashboardProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Load projects from localStorage
-    const savedProjects = localStorage.getItem('kanban_projects');
-    if (savedProjects) {
-      const parsedProjects = JSON.parse(savedProjects);
-      setProjects(parsedProjects);
-      if (parsedProjects.length > 0) {
-        setSelectedProject(parsedProjects[0]);
-      }
-    }
+    loadProjects();
   }, []);
 
-  useEffect(() => {
-    // Save projects to localStorage whenever projects change
-    localStorage.setItem('kanban_projects', JSON.stringify(projects));
-  }, [projects]);
-
-  const addProject = (projectName: string) => {
-    const newProject: Project = {
-      id: Date.now(),
-      name: projectName,
-      columns: [
-        { id: 'todo', title: 'To Do', cards: [] },
-        { id: 'doing', title: 'Doing', cards: [] },
-        { id: 'done', title: 'Done', cards: [] }
-      ]
-    };
-    const updatedProjects = [...projects, newProject];
-    setProjects(updatedProjects);
-    setSelectedProject(newProject);
-  };
-
-  const deleteProject = (projectId: number) => {
-    const updatedProjects = projects.filter(p => p.id !== projectId);
-    setProjects(updatedProjects);
-    if (selectedProject?.id === projectId) {
-      setSelectedProject(updatedProjects[0] || null);
+  const loadProjects = async () => {
+    try {
+      setIsLoading(true);
+      const userProjects = await projectService.getProjects();
+      setProjects(userProjects);
+      
+      if (userProjects.length > 0) {
+        setSelectedProject(userProjects[0]);
+      }
+    } catch (error) {
+      toast({
+        title: "Error loading projects",
+        description: "There was a problem loading your projects",
+        variant: "destructive",
+      });
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateProject = (updatedProject: Project) => {
-    const updatedProjects = projects.map(p => 
-      p.id === updatedProject.id ? updatedProject : p
-    );
-    setProjects(updatedProjects);
-    setSelectedProject(updatedProject);
+  const addProject = async (projectName: string) => {
+    try {
+      const newProject = await projectService.createProject(projectName);
+      setProjects([newProject, ...projects]);
+      setSelectedProject(newProject);
+      toast({
+        title: "Project created",
+        description: "Your new project has been created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error creating project",
+        description: "There was a problem creating your project",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  };
+
+  const deleteProject = async (projectId: string) => {
+    try {
+      await projectService.deleteProject(projectId);
+      const updatedProjects = projects.filter(p => p.id !== projectId);
+      setProjects(updatedProjects);
+      
+      if (selectedProject?.id === projectId) {
+        setSelectedProject(updatedProjects[0] || null);
+      }
+      
+      toast({
+        title: "Project deleted",
+        description: "The project has been deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting project",
+        description: "There was a problem deleting the project",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  };
+
+  const updateProject = async (updatedProject: Project) => {
+    try {
+      await projectService.updateProject(updatedProject);
+      const updatedProjects = projects.map(p => 
+        p.id === updatedProject.id ? updatedProject : p
+      );
+      setProjects(updatedProjects);
+      setSelectedProject(updatedProject);
+    } catch (error) {
+      toast({
+        title: "Error updating project",
+        description: "There was a problem updating the project",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
   };
 
   return (
@@ -82,6 +114,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
           onSelectProject={setSelectedProject}
           onAddProject={addProject}
           onDeleteProject={deleteProject}
+          isLoading={isLoading}
         />
       </div>
 
@@ -102,7 +135,14 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
 
         {/* Kanban Board */}
         <div className="flex-1 p-6">
-          {selectedProject ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading projects...</p>
+              </div>
+            </div>
+          ) : selectedProject ? (
             <KanbanBoard
               project={selectedProject}
               onUpdateProject={updateProject}
