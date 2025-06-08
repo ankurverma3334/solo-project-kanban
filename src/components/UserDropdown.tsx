@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 
 interface UserDropdownProps {
   user: SupabaseUser;
@@ -11,6 +12,7 @@ interface UserDropdownProps {
 const UserDropdown = ({ user, onLogout }: UserDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -24,6 +26,11 @@ const UserDropdown = ({ user, onLogout }: UserDropdownProps) => {
   }, []);
 
   const displayName = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+
+  const handleSettingsClick = () => {
+    setIsOpen(false);
+    navigate('/settings');
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -47,11 +54,7 @@ const UserDropdown = ({ user, onLogout }: UserDropdownProps) => {
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           <div className="py-1">
             <button
-              onClick={() => {
-                setIsOpen(false);
-                // TODO: Implement settings in phase 2
-                alert('Settings functionality will be added in Phase 2');
-              }}
+              onClick={handleSettingsClick}
               className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             >
               <Settings className="w-4 h-4" />
