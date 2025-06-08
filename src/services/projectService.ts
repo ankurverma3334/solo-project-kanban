@@ -8,6 +8,7 @@ type SupabaseProject = {
   id: string;
   name: string;
   user_id: string;
+  organization_id: string;
   columns: Json;
   created_at: string;
   updated_at: string;
@@ -17,6 +18,7 @@ type SupabaseProject = {
 export interface Project {
   id: string;
   name: string;
+  organization_id?: string;
   columns: Array<{
     id: string;
     title: string;
@@ -34,6 +36,7 @@ const mapToProject = (supabaseProject: SupabaseProject): Project => {
   return {
     id: supabaseProject.id,
     name: supabaseProject.name,
+    organization_id: supabaseProject.organization_id,
     // Parse the JSON string or use the JSON object directly, depending on what Supabase returns
     columns: (typeof supabaseProject.columns === 'string' 
       ? JSON.parse(supabaseProject.columns as string) 
@@ -42,11 +45,17 @@ const mapToProject = (supabaseProject: SupabaseProject): Project => {
 };
 
 export const projectService = {
-  async getProjects(): Promise<Project[]> {
-    const { data, error } = await supabase
+  async getProjects(organizationId?: string): Promise<Project[]> {
+    let query = supabase
       .from("projects")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (organizationId) {
+      query = query.eq("organization_id", organizationId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error fetching projects:", error);
@@ -73,7 +82,7 @@ export const projectService = {
     return data ? mapToProject(data as SupabaseProject) : null;
   },
 
-  async createProject(name: string, user: User): Promise<Project> {
+  async createProject(name: string, user: User, organizationId: string): Promise<Project> {
     if (!user) {
       throw new Error("User must be logged in to create a project");
     }
@@ -81,6 +90,7 @@ export const projectService = {
     const newProjectData = {
       name,
       user_id: user.id,
+      organization_id: organizationId,
       columns: [
         { id: "todo", title: "To Do", cards: [] },
         { id: "doing", title: "Doing", cards: [] },
@@ -93,6 +103,7 @@ export const projectService = {
       .insert({
         name: newProjectData.name,
         user_id: newProjectData.user_id,
+        organization_id: newProjectData.organization_id,
         columns: newProjectData.columns as Json
       })
       .select()
