@@ -261,7 +261,7 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
                   <div className="flex items-center space-x-2 mb-1">
                     <h3 className="text-lg font-semibold text-gray-900">{org.name}</h3>
                     {org.is_password_protected && (
-                      <Lock className="w-4 h-4 text-amber-500" title="Password Protected" />
+                      <Lock className="w-4 h-4 text-amber-500" />
                     )}
                   </div>
                   {org.description && (
