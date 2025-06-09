@@ -1,6 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
+import { ChartLine } from 'lucide-react';
 import ProjectSidebar from './ProjectSidebar';
 import KanbanBoard from './KanbanBoard';
 import UserDropdown from './UserDropdown';
@@ -22,6 +23,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isOrganizationsLoading, setIsOrganizationsLoading] = useState<boolean>(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadOrganizations();
@@ -184,6 +186,10 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
     setProjects([]);
   };
 
+  const handleProgressDashboardClick = () => {
+    navigate('/progress');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar - 15% */}
@@ -212,12 +218,23 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
                 Manage your tasks and track progress
               </p>
             </div>
-            <OrganizationSelector
-              organizations={organizations}
-              selectedOrganization={selectedOrganization}
-              onSelectOrganization={handleOrganizationSelect}
-              isLoading={isOrganizationsLoading}
-            />
+            <div className="flex items-center space-x-3">
+              <OrganizationSelector
+                organizations={organizations}
+                selectedOrganization={selectedOrganization}
+                onSelectOrganization={handleOrganizationSelect}
+                isLoading={isOrganizationsLoading}
+              />
+              {selectedOrganization && (
+                <button
+                  onClick={handleProgressDashboardClick}
+                  className="flex items-center justify-center w-10 h-10 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors"
+                  title="Progress Dashboard"
+                >
+                  <ChartLine className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </div>
           <UserDropdown user={user} onLogout={onLogout} />
         </header>
