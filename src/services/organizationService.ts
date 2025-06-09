@@ -7,6 +7,8 @@ export interface Organization {
   name: string;
   description?: string;
   user_id: string;
+  is_password_protected: boolean;
+  password_hash?: string;
   created_at: string;
   updated_at: string;
 }
@@ -26,18 +28,32 @@ export const organizationService = {
     return data || [];
   },
 
-  async createOrganization(name: string, description: string, user: User): Promise<Organization> {
+  async createOrganization(
+    name: string, 
+    description: string, 
+    user: User,
+    password?: string
+  ): Promise<Organization> {
     if (!user) {
       throw new Error("User must be logged in to create an organization");
     }
 
+    const orgData: any = {
+      name,
+      description,
+      user_id: user.id,
+      is_password_protected: !!password,
+    };
+
+    // If password is provided, hash it (in a real app, this should be done server-side)
+    if (password) {
+      // Simple hash for demo purposes - in production, use proper bcrypt on server
+      orgData.password_hash = btoa(password);
+    }
+
     const { data, error } = await supabase
       .from("organizations")
-      .insert({
-        name,
-        description,
-        user_id: user.id,
-      })
+      .insert(orgData)
       .select()
       .single();
 
@@ -79,5 +95,22 @@ export const organizationService = {
       console.error("Error deleting organization:", error);
       throw error;
     }
+  },
+
+  async verifyOrganizationPassword(organizationId: string, password: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("password_hash")
+      .eq("id", organizationId)
+      .eq("is_password_protected", true)
+      .single();
+
+    if (error || !data) {
+      console.error("Error verifying password:", error);
+      return false;
+    }
+
+    // Simple comparison for demo purposes - in production, use proper bcrypt comparison
+    return data.password_hash === btoa(password);
   },
 };

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Building } from 'lucide-react';
+import { Plus, Trash2, Edit, Building, Lock, Unlock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { organizationService, Organization } from '@/services/organizationService';
 import { User } from '@supabase/supabase-js';
@@ -14,7 +14,12 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    description: '', 
+    password: '', 
+    isPasswordProtected: false 
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -62,12 +67,13 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
         const newOrg = await organizationService.createOrganization(
           formData.name.trim(),
           formData.description.trim(),
-          user
+          user,
+          formData.isPasswordProtected ? formData.password : undefined
         );
         setOrganizations([newOrg, ...organizations]);
         toast({
           title: "Organization created",
-          description: "Your new organization has been created successfully",
+          description: `Your new ${formData.isPasswordProtected ? 'password-protected ' : ''}organization has been created successfully`,
         });
       }
       resetForm();
@@ -85,7 +91,12 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
 
   const handleEdit = (org: Organization) => {
     setEditingOrg(org);
-    setFormData({ name: org.name, description: org.description || '' });
+    setFormData({ 
+      name: org.name, 
+      description: org.description || '',
+      password: '',
+      isPasswordProtected: org.is_password_protected
+    });
     setShowAddForm(true);
   };
 
@@ -110,7 +121,7 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '' });
+    setFormData({ name: '', description: '', password: '', isPasswordProtected: false });
     setShowAddForm(false);
     setEditingOrg(null);
   };
@@ -173,6 +184,46 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
                 disabled={isSubmitting}
               />
             </div>
+            
+            {!editingOrg && (
+              <>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="passwordProtected"
+                    checked={formData.isPasswordProtected}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      isPasswordProtected: e.target.checked,
+                      password: e.target.checked ? formData.password : ''
+                    })}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="passwordProtected" className="text-sm font-medium text-gray-700">
+                    Password protect this organization
+                  </label>
+                </div>
+                
+                {formData.isPasswordProtected && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Organization Password
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter password for organization access"
+                      required={formData.isPasswordProtected}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+            
             <div className="flex space-x-3">
               <button
                 type="submit"
@@ -207,13 +258,26 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
             <div key={org.id} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{org.name}</h3>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <h3 className="text-lg font-semibold text-gray-900">{org.name}</h3>
+                    {org.is_password_protected && (
+                      <Lock className="w-4 h-4 text-amber-500" title="Password Protected" />
+                    )}
+                  </div>
                   {org.description && (
                     <p className="text-gray-600 mt-1">{org.description}</p>
                   )}
-                  <p className="text-sm text-gray-500 mt-2">
-                    Created {new Date(org.created_at).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <p className="text-sm text-gray-500">
+                      Created {new Date(org.created_at).toLocaleDateString()}
+                    </p>
+                    {org.is_password_protected && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        <Lock className="w-3 h-3 mr-1" />
+                        Protected
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex space-x-2">
                   <button

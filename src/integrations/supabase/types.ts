@@ -14,7 +14,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_password_protected: boolean
           name: string
+          password_hash: string | null
           updated_at: string
           user_id: string
         }
@@ -22,7 +24,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_password_protected?: boolean
           name: string
+          password_hash?: string | null
           updated_at?: string
           user_id: string
         }
@@ -30,7 +34,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_password_protected?: boolean
           name?: string
+          password_hash?: string | null
           updated_at?: string
           user_id?: string
         }
