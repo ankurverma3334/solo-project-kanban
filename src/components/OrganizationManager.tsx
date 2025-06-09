@@ -18,7 +18,8 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
     name: '', 
     description: '', 
     password: '', 
-    isPasswordProtected: false 
+    isPasswordProtected: false,
+    changePassword: false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -51,11 +52,24 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
     try {
       setIsSubmitting(true);
       if (editingOrg) {
-        const updatedOrg = await organizationService.updateOrganization({
+        // For editing, we need to handle password updates differently
+        let updateData: any = {
           ...editingOrg,
           name: formData.name.trim(),
           description: formData.description.trim(),
-        });
+        };
+
+        // If user wants to change password settings
+        if (formData.changePassword) {
+          updateData.is_password_protected = formData.isPasswordProtected;
+          if (formData.isPasswordProtected && formData.password) {
+            updateData.password_hash = btoa(formData.password);
+          } else if (!formData.isPasswordProtected) {
+            updateData.password_hash = null;
+          }
+        }
+
+        const updatedOrg = await organizationService.updateOrganization(updateData);
         setOrganizations(organizations.map(org => 
           org.id === updatedOrg.id ? updatedOrg : org
         ));
@@ -95,7 +109,8 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
       name: org.name, 
       description: org.description || '',
       password: '',
-      isPasswordProtected: org.is_password_protected
+      isPasswordProtected: org.is_password_protected,
+      changePassword: false
     });
     setShowAddForm(true);
   };
@@ -121,7 +136,7 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', password: '', isPasswordProtected: false });
+    setFormData({ name: '', description: '', password: '', isPasswordProtected: false, changePassword: false });
     setShowAddForm(false);
     setEditingOrg(null);
   };
@@ -185,7 +200,9 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
               />
             </div>
             
-            {!editingOrg && (
+            {/* Password Protection Section */}
+            {!editingOrg ? (
+              // For creating new organizations
               <>
                 <div className="flex items-center space-x-2">
                   <input
@@ -221,6 +238,74 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
                     />
                   </div>
                 )}
+              </>
+            ) : (
+              // For editing existing organizations
+              <>
+                <div className="border-t pt-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="changePassword"
+                      checked={formData.changePassword}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        changePassword: e.target.checked,
+                        password: ''
+                      })}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      disabled={isSubmitting}
+                    />
+                    <label htmlFor="changePassword" className="text-sm font-medium text-gray-700">
+                      Change password settings
+                    </label>
+                  </div>
+                  
+                  {formData.changePassword && (
+                    <div className="space-y-3 ml-6">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="editPasswordProtected"
+                          checked={formData.isPasswordProtected}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            isPasswordProtected: e.target.checked,
+                            password: e.target.checked ? formData.password : ''
+                          })}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                          disabled={isSubmitting}
+                        />
+                        <label htmlFor="editPasswordProtected" className="text-sm font-medium text-gray-700">
+                          Password protect this organization
+                        </label>
+                      </div>
+                      
+                      {formData.isPasswordProtected && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {editingOrg?.is_password_protected ? 'New Password' : 'Organization Password'}
+                          </label>
+                          <input
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder={editingOrg?.is_password_protected ? "Enter new password" : "Enter password for organization access"}
+                            required={formData.isPasswordProtected}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      )}
+                      
+                      {editingOrg?.is_password_protected && !formData.isPasswordProtected && (
+                        <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                          Warning: Unchecking this will remove password protection from this organization.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </>
             )}
             

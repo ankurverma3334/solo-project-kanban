@@ -66,13 +66,24 @@ export const organizationService = {
   },
 
   async updateOrganization(organization: Organization): Promise<Organization> {
+    const updateData: any = {
+      name: organization.name,
+      description: organization.description,
+      updated_at: new Date().toISOString(),
+    };
+
+    // If password-related fields are being updated
+    if ('is_password_protected' in organization) {
+      updateData.is_password_protected = organization.is_password_protected;
+    }
+    
+    if ('password_hash' in organization) {
+      updateData.password_hash = organization.password_hash;
+    }
+
     const { data, error } = await supabase
       .from("organizations")
-      .update({
-        name: organization.name,
-        description: organization.description,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", organization.id)
       .select()
       .single();
