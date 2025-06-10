@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Building, Lock, Unlock } from 'lucide-react';
+import { Plus, Trash2, Edit, Building, Lock, ChevronDown, ChevronRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { organizationService, Organization } from '@/services/organizationService';
 import { User } from '@supabase/supabase-js';
+import TeamManager from './TeamManager';
 
 interface OrganizationManagerProps {
   user: User;
@@ -11,6 +11,7 @@ interface OrganizationManagerProps {
 
 const OrganizationManager = ({ user }: OrganizationManagerProps) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
@@ -52,14 +53,12 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
     try {
       setIsSubmitting(true);
       if (editingOrg) {
-        // For editing, we need to handle password updates differently
         let updateData: any = {
           ...editingOrg,
           name: formData.name.trim(),
           description: formData.description.trim(),
         };
 
-        // If user wants to change password settings
         if (formData.changePassword) {
           updateData.is_password_protected = formData.isPasswordProtected;
           if (formData.isPasswordProtected && formData.password) {
@@ -141,6 +140,10 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
     setEditingOrg(null);
   };
 
+  const toggleExpanded = (orgId: string) => {
+    setExpandedOrgId(expandedOrgId === orgId ? null : orgId);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -154,7 +157,7 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Organizations</h2>
-          <p className="text-gray-600">Manage your organizations</p>
+          <p className="text-gray-600">Manage your organizations and teams</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
@@ -202,7 +205,6 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
             
             {/* Password Protection Section */}
             {!editingOrg ? (
-              // For creating new organizations
               <>
                 <div className="flex items-center space-x-2">
                   <input
@@ -240,7 +242,6 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
                 )}
               </>
             ) : (
-              // For editing existing organizations
               <>
                 <div className="border-t pt-4">
                   <div className="flex items-center space-x-2 mb-3">
@@ -340,45 +341,64 @@ const OrganizationManager = ({ user }: OrganizationManagerProps) => {
           </div>
         ) : (
           organizations.map((org) => (
-            <div key={org.id} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h3 className="text-lg font-semibold text-gray-900">{org.name}</h3>
-                    {org.is_password_protected && (
-                      <Lock className="w-4 h-4 text-amber-500" />
+            <div key={org.id} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="p-6">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <button
+                        onClick={() => toggleExpanded(org.id)}
+                        className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded transition-colors"
+                      >
+                        {expandedOrgId === org.id ? (
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-500" />
+                        )}
+                        <h3 className="text-lg font-semibold text-gray-900">{org.name}</h3>
+                      </button>
+                      {org.is_password_protected && (
+                        <Lock className="w-4 h-4 text-amber-500" />
+                      )}
+                    </div>
+                    {org.description && (
+                      <p className="text-gray-600 mt-1">{org.description}</p>
                     )}
+                    <div className="flex items-center space-x-4 mt-2">
+                      <p className="text-sm text-gray-500">
+                        Created {new Date(org.created_at).toLocaleDateString()}
+                      </p>
+                      {org.is_password_protected && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                          <Lock className="w-3 h-3 mr-1" />
+                          Protected
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {org.description && (
-                    <p className="text-gray-600 mt-1">{org.description}</p>
-                  )}
-                  <div className="flex items-center space-x-4 mt-2">
-                    <p className="text-sm text-gray-500">
-                      Created {new Date(org.created_at).toLocaleDateString()}
-                    </p>
-                    {org.is_password_protected && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                        <Lock className="w-3 h-3 mr-1" />
-                        Protected
-                      </span>
-                    )}
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleEdit(org)}
+                      className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(org.id)}
+                      className="p-2 text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEdit(org)}
-                    className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(org.id)}
-                    className="p-2 text-gray-500 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
+
+              {/* Teams Section */}
+              {expandedOrgId === org.id && (
+                <div className="border-t border-gray-200 p-6 bg-gray-50">
+                  <TeamManager organization={org} user={user} />
+                </div>
+              )}
             </div>
           ))
         )}
