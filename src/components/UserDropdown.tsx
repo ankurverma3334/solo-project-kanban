@@ -1,8 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown, Building2 } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import OrganizationManager from '@/components/OrganizationManager';
 
 interface UserDropdownProps {
   user: SupabaseUser;
@@ -11,6 +13,7 @@ interface UserDropdownProps {
 
 const UserDropdown = ({ user, onLogout }: UserDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isOrgPopoverOpen, setIsOrgPopoverOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -30,6 +33,11 @@ const UserDropdown = ({ user, onLogout }: UserDropdownProps) => {
   const handleSettingsClick = () => {
     setIsOpen(false);
     navigate('/settings');
+  };
+
+  const handleOrganizationsClick = () => {
+    setIsOpen(false);
+    setIsOrgPopoverOpen(true);
   };
 
   return (
@@ -53,6 +61,22 @@ const UserDropdown = ({ user, onLogout }: UserDropdownProps) => {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           <div className="py-1">
+            <Popover open={isOrgPopoverOpen} onOpenChange={setIsOrgPopoverOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  onClick={handleOrganizationsClick}
+                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>Manage Organizations</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-96 p-0" side="left" align="start">
+                <div className="p-6">
+                  <OrganizationManager user={user} />
+                </div>
+              </PopoverContent>
+            </Popover>
             <button
               onClick={handleSettingsClick}
               className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
