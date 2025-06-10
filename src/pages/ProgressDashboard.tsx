@@ -2,7 +2,7 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import UserDropdown from '@/components/UserDropdown';
-import OrganizationSelector from '@/components/OrganizationSelector';
+import OrganizationDropdown from '@/components/OrganizationDropdown';
 import { organizationService, Organization } from '@/services/organizationService';
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -58,14 +58,16 @@ const ProgressDashboard = () => {
               Track progress and analytics across your projects
             </p>
           </div>
-          <OrganizationSelector
+        </div>
+        <div className="flex items-center space-x-3">
+          <OrganizationDropdown
             organizations={organizations}
             selectedOrganization={selectedOrganization}
             onSelectOrganization={handleOrganizationSelect}
             isLoading={isOrganizationsLoading}
           />
+          <UserDropdown user={user} onLogout={signOut} />
         </div>
-        <UserDropdown user={user} onLogout={signOut} />
       </header>
 
       {/* Main Content */}

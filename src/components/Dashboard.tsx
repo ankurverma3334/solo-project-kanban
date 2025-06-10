@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
@@ -5,7 +6,7 @@ import { ChartLine } from 'lucide-react';
 import ProjectSidebar from './ProjectSidebar';
 import KanbanBoard from './KanbanBoard';
 import UserDropdown from './UserDropdown';
-import OrganizationSelector from './OrganizationSelector';
+import OrganizationDropdown from './OrganizationDropdown';
 import { User } from '@supabase/supabase-js';
 import { projectService, Project } from '@/services/projectService';
 import { organizationService, Organization } from '@/services/organizationService';
@@ -218,25 +219,25 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
                 Manage your tasks and track progress
               </p>
             </div>
-            <div className="flex items-center space-x-3">
-              <OrganizationSelector
-                organizations={organizations}
-                selectedOrganization={selectedOrganization}
-                onSelectOrganization={handleOrganizationSelect}
-                isLoading={isOrganizationsLoading}
-              />
-              {selectedOrganization && (
-                <button
-                  onClick={handleProgressDashboardClick}
-                  className="flex items-center justify-center w-10 h-10 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors"
-                  title="Progress Dashboard"
-                >
-                  <ChartLine className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+            {selectedOrganization && (
+              <button
+                onClick={handleProgressDashboardClick}
+                className="flex items-center justify-center w-10 h-10 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors"
+                title="Progress Dashboard"
+              >
+                <ChartLine className="w-5 h-5" />
+              </button>
+            )}
           </div>
-          <UserDropdown user={user} onLogout={onLogout} />
+          <div className="flex items-center space-x-3">
+            <OrganizationDropdown
+              organizations={organizations}
+              selectedOrganization={selectedOrganization}
+              onSelectOrganization={handleOrganizationSelect}
+              isLoading={isOrganizationsLoading}
+            />
+            <UserDropdown user={user} onLogout={onLogout} />
+          </div>
         </header>
 
         {/* Kanban Board */}

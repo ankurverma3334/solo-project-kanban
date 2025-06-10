@@ -2,6 +2,7 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import OrganizationManager from '@/components/OrganizationManager';
+import PasswordChangeForm from '@/components/PasswordChangeForm';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,8 +29,12 @@ const Settings = () => {
           <p className="text-gray-600 mt-2">Manage your account settings and organizations</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <OrganizationManager user={user} />
+        <div className="space-y-6">
+          <PasswordChangeForm />
+          
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <OrganizationManager user={user} />
+          </div>
         </div>
       </div>
     </div>
