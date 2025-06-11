@@ -31,29 +31,49 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="personal">Personal</TabsTrigger>
-            <TabsTrigger value="organizations">Organizations</TabsTrigger>
-            <TabsTrigger value="teams">Teams</TabsTrigger>
-            <TabsTrigger value="team-members">Team Members</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border border-gray-200 p-1 rounded-lg">
+            <TabsTrigger 
+              value="personal" 
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-700 font-medium py-2 px-4 rounded-md transition-all"
+            >
+              Personal
+            </TabsTrigger>
+            <TabsTrigger 
+              value="organizations"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-700 font-medium py-2 px-4 rounded-md transition-all"
+            >
+              Organizations
+            </TabsTrigger>
+            <TabsTrigger 
+              value="teams"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-700 font-medium py-2 px-4 rounded-md transition-all"
+            >
+              Teams
+            </TabsTrigger>
+            <TabsTrigger 
+              value="team-members"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-gray-700 font-medium py-2 px-4 rounded-md transition-all"
+            >
+              Team Members
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="personal" className="space-y-6">
+          <TabsContent value="personal" className="space-y-6 mt-6">
             <PasswordChangeForm />
           </TabsContent>
           
-          <TabsContent value="organizations" className="space-y-6">
+          <TabsContent value="organizations" className="space-y-6 mt-6">
             <OrganizationManager user={user} />
           </TabsContent>
           
-          <TabsContent value="teams" className="space-y-6">
+          <TabsContent value="teams" className="space-y-6 mt-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Teams Management</h3>
               <p className="text-gray-600">Team management functionality will be available here. Please select an organization first to manage its teams.</p>
             </div>
           </TabsContent>
           
-          <TabsContent value="team-members" className="space-y-6">
+          <TabsContent value="team-members" className="space-y-6 mt-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Team Members</h3>
               <p className="text-gray-600">Team member management functionality will be available here. Please select a team first to manage its members.</p>
