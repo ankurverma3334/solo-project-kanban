@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
-import { ChartLine } from 'lucide-react';
+import { ChartLine, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProjectSidebar from './ProjectSidebar';
 import KanbanBoard from './KanbanBoard';
 import UserDropdown from './UserDropdown';
 import OrganizationDropdown from './OrganizationDropdown';
+import TeamManager from './TeamManager';
 import { User } from '@supabase/supabase-js';
 import { projectService, Project } from '@/services/projectService';
 import { organizationService, Organization } from '@/services/organizationService';
@@ -23,6 +24,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isOrganizationsLoading, setIsOrganizationsLoading] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<string>('projects');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -213,10 +215,10 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
           <div className="flex items-center space-x-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {selectedProject ? selectedProject.name : 'Select a Project'}
+                {selectedProject ? selectedProject.name : 'Dashboard'}
               </h1>
               <p className="text-gray-600 text-sm">
-                Manage your tasks and track progress
+                Manage your projects and teams
               </p>
             </div>
             {selectedOrganization && (
@@ -240,7 +242,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
           </div>
         </header>
 
-        {/* Kanban Board */}
+        {/* Main Content Area */}
         <div className="flex-1 p-6">
           {isLoading || isOrganizationsLoading ? (
             <div className="flex items-center justify-center h-full">
@@ -251,23 +253,43 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
                 </p>
               </div>
             </div>
-          ) : selectedProject ? (
-            <KanbanBoard
-              project={selectedProject}
-              onUpdateProject={updateProject}
-            />
           ) : selectedOrganization ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">No Projects in {selectedOrganization.name}</h3>
-                <p className="text-gray-600">Create a new project to get started</p>
-              </div>
-            </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="projects" className="flex items-center space-x-2">
+                  <span>Projects</span>
+                </TabsTrigger>
+                <TabsTrigger value="teams" className="flex items-center space-x-2">
+                  <Users className="w-4 h-4" />
+                  <span>Teams</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="projects" className="h-full">
+                {selectedProject ? (
+                  <KanbanBoard
+                    project={selectedProject}
+                    onUpdateProject={updateProject}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-medium text-gray-900 mb-2">No Projects in {selectedOrganization.name}</h3>
+                      <p className="text-gray-600">Create a new project to get started</p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="teams" className="h-full">
+                <TeamManager organization={selectedOrganization} user={user} />
+              </TabsContent>
+            </Tabs>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -277,7 +299,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
                   </svg>
                 </div>
                 <h3 className="text-xl font-medium text-gray-900 mb-2">No Organization Selected</h3>
-                <p className="text-gray-600">Select an organization to view and manage projects</p>
+                <p className="text-gray-600">Select an organization to view and manage projects and teams</p>
               </div>
             </div>
           )}
