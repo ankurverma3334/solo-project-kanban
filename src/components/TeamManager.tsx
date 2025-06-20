@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Users } from 'lucide-react';
+import { Plus, Trash2, Edit, Users, ChevronDown, ChevronRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { teamService, Team } from '@/services/teamService';
 import { Organization } from '@/services/organizationService';
 import { User } from '@supabase/supabase-js';
+import TeamMemberManager from './TeamMemberManager';
 
 interface TeamManagerProps {
   organization: Organization;
@@ -13,6 +14,7 @@ interface TeamManagerProps {
 
 const TeamManager = ({ organization, user }: TeamManagerProps) => {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
@@ -101,6 +103,9 @@ const TeamManager = ({ organization, user }: TeamManagerProps) => {
     try {
       await teamService.deleteTeam(id);
       setTeams(teams.filter(team => team.id !== id));
+      if (expandedTeamId === id) {
+        setExpandedTeamId(null);
+      }
       toast({
         title: "Team deleted",
         description: "The team has been deleted successfully",
@@ -119,6 +124,10 @@ const TeamManager = ({ organization, user }: TeamManagerProps) => {
     setFormData({ name: '', description: '' });
     setShowAddForm(false);
     setEditingTeam(null);
+  };
+
+  const toggleTeamExpanded = (teamId: string) => {
+    setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
   };
 
   if (isLoading) {
@@ -210,32 +219,53 @@ const TeamManager = ({ organization, user }: TeamManagerProps) => {
           </div>
         ) : (
           teams.map((team) => (
-            <div key={team.id} className="bg-white p-4 rounded-md border border-gray-200">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h4 className="text-md font-medium text-gray-900">{team.name}</h4>
-                  {team.description && (
-                    <p className="text-sm text-gray-600 mt-1">{team.description}</p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-2">
-                    Created {new Date(team.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => handleEdit(team)}
-                    className="p-1.5 text-gray-500 hover:text-blue-600 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(team.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+            <div key={team.id} className="bg-white rounded-md border border-gray-200">
+              <div className="p-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <button
+                        onClick={() => toggleTeamExpanded(team.id)}
+                        className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded transition-colors"
+                      >
+                        {expandedTeamId === team.id ? (
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-500" />
+                        )}
+                        <h4 className="text-md font-medium text-gray-900">{team.name}</h4>
+                      </button>
+                    </div>
+                    {team.description && (
+                      <p className="text-sm text-gray-600 mt-1 ml-6">{team.description}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2 ml-6">
+                      Created {new Date(team.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => handleEdit(team)}
+                      className="p-1.5 text-gray-500 hover:text-blue-600 transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(team.id)}
+                      className="p-1.5 text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {/* Team Members Section */}
+              {expandedTeamId === team.id && (
+                <div className="border-t border-gray-200 p-4 bg-gray-50">
+                  <TeamMemberManager team={team} user={user} />
+                </div>
+              )}
             </div>
           ))
         )}
