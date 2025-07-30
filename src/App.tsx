@@ -20,7 +20,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={process.env.NODE_ENV === 'production' ? '/solo-project-kanban' : undefined}>
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
